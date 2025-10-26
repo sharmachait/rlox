@@ -1,3 +1,8 @@
+use rlox::chunk::{Chunk};
+use rlox::chunk::OpCode::OpReturn;
+
 fn main() {
-    println!("Hello, world!");
+    let mut chunk = Chunk::new();
+    chunk.write(OpReturn as u8);
+    chunk.free();
 }
