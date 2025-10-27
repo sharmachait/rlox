@@ -1,4 +1,5 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::value::{print_value};
 
 pub fn disassemble<T: ToString>(chunk: &mut Chunk, name: T){
     println!("== {} ==", name.to_string());
@@ -9,22 +10,33 @@ pub fn disassemble<T: ToString>(chunk: &mut Chunk, name: T){
     }
 }
 fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
-    print!("{offset:04} "); // not necessary but useful when we get to loops and if statements
-    // alot of jumping around in the code
-
+    print!("{offset:04} ");
+    // not necessary but useful when we get to loops and if statements
+    // a lot of jumping around in the code
     let instruction: OpCode = chunk.code[offset].into();
     match instruction {
+        OpCode::OpConstant => {
+            constant_instruction("OP_CONSTANT", chunk, offset)
+        },
         OpCode::OpReturn => {
             simple_instruction("OP_RETURN", offset)
         },
-        OpCode::Unimplemented =>{
+        OpCode::Unimplemented => {
             println!("Unknown opcode {}", instruction as u8);
-            offset+1
+            offset + 1
         }
+
     }
 }
-
+fn constant_instruction(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
+    let constant = chunk.code[offset+ 1 ];
+    print!("{:<16} {:>4} '", name, constant);
+    let val = &chunk.constant_pool[constant as usize];
+    print_value(val);
+    println!("'");
+    offset + 2
+}
 fn simple_instruction(name: &str, offset: usize) -> usize {
     println!("{}", name);
-    offset+1
+    offset + 1
 }
