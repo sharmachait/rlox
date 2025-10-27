@@ -5,6 +5,7 @@ pub enum OpCode {
     // use when the value needs to be produced
     // has a single bytecode operand to determine which constant to load
     OpConstant,
+    OpConstantLong,
     Unimplemented
 }
 
@@ -17,6 +18,7 @@ impl From<u8> for OpCode {
         match value {
             0 => OpCode::OpReturn,
             1 => OpCode::OpConstant,
+            2 => OpCode::OpConstantLong,
             _ => OpCode::Unimplemented
         }
     }
@@ -55,9 +57,28 @@ impl Chunk {
     pub fn write(&mut self, byte: u8, line: usize) {
         self.code.push(Byte::new(byte, line));
     }
-    pub fn add_constant(&mut self, value: Types) -> u8 {
+    pub fn write_constant(&mut self, val: Types, line: usize) {
+        let constant_pool_index = self.add_constant(val);
+        let opCode: OpCode;
+        if constant_pool_index < 256 {
+            opCode = OpCode::OpConstant
+        }else {
+            opCode = OpCode::OpConstantLong
+        }
+        self.write(opCode as u8, line);
+
+        if constant_pool_index >=256 {
+            self.write((constant_pool_index & 0xFF) as u8, line);
+            self.write(((constant_pool_index >> 8) & 0xFF) as u8, line);
+            self.write(((constant_pool_index >> 16) & 0xFF) as u8, line); 
+            // 3 bytes as the book tells us to use 24 bits
+        }else{
+            self.write(constant_pool_index as u8, line);
+        }
+    }
+    fn add_constant(&mut self, value: Types) -> usize {
         self.constant_pool.push(value);
-        (self.constant_pool.len() - 1) as u8
+        (self.constant_pool.len() - 1)
     }
     pub fn free(&mut self) {
         self.code = Vec::new();

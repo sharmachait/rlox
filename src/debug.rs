@@ -23,6 +23,9 @@ fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
         OpCode::OpConstant => {
             constant_instruction("OP_CONSTANT", chunk, offset)
         },
+        OpCode::OpConstantLong => {
+            constant_instruction_long("OP_CONSTANT_LONG", chunk, offset)
+        },
         OpCode::OpReturn => {
             simple_instruction("OP_RETURN", offset)
         },
@@ -33,10 +36,24 @@ fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
 
     }
 }
+
+fn constant_instruction_long(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
+    let byte1 = chunk.code[offset + 1].byte as usize;
+    let byte2 = chunk.code[offset + 2].byte as usize;
+    let byte3 = chunk.code[offset + 3].byte as usize;
+
+    let constant = byte1 | (byte2 << 8) | (byte3 << 16);print!("{:<16} {:>4} '", name, constant);
+    let val = &chunk.constant_pool[constant];
+    print_value(val);
+    println!("'");
+
+    offset + 4  // OpCode + 3 operand bytes
+}
+
 fn constant_instruction(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
-    let constant = chunk.code[offset+ 1 ].byte;
-    print!("{:<16} {:>4} '", name, constant);
-    let val = &chunk.constant_pool[constant as usize];
+    let constant_index = chunk.code[offset+ 1 ].byte;
+    print!("{:<16} {:>4} '", name, constant_index);
+    let val = &chunk.constant_pool[constant_index as usize];
     print_value(val);
     println!("'");
     offset + 2
