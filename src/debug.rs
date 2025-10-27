@@ -13,7 +13,12 @@ fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
     print!("{offset:04} ");
     // not necessary but useful when we get to loops and if statements
     // a lot of jumping around in the code
-    let instruction: OpCode = chunk.code[offset].into();
+    if offset > 0 && chunk.code[offset].line == chunk.code[offset-1].line {
+        print!("   | ");
+    } else{
+        print!("{:4} ", chunk.code[offset].line);
+    }
+    let instruction: OpCode = chunk.code[offset].byte.into();
     match instruction {
         OpCode::OpConstant => {
             constant_instruction("OP_CONSTANT", chunk, offset)
@@ -29,7 +34,7 @@ fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
     }
 }
 fn constant_instruction(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
-    let constant = chunk.code[offset+ 1 ];
+    let constant = chunk.code[offset+ 1 ].byte;
     print!("{:<16} {:>4} '", name, constant);
     let val = &chunk.constant_pool[constant as usize];
     print_value(val);

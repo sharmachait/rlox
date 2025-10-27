@@ -22,8 +22,22 @@ impl From<u8> for OpCode {
     }
 }
 
+pub struct Byte {
+    pub byte: u8,
+    pub line: usize
+}
+
+impl Byte{
+    pub fn new(byte: u8, line: usize) -> Self {
+        Self {
+            byte,
+            line
+        }
+    }
+}
+
 pub struct Chunk {
-    pub code: Vec<u8>,
+    pub code: Vec<Byte>,
     pub constant_pool: Vec<Types>
 }
 // operands for a bytecode instruction are not the operands for the operator
@@ -38,8 +52,8 @@ impl Chunk {
             constant_pool: Vec::new(),
         }
     }
-    pub fn write(&mut self, byte: u8) {
-        self.code.push(byte);
+    pub fn write(&mut self, byte: u8, line: usize) {
+        self.code.push(Byte::new(byte, line));
     }
     pub fn add_constant(&mut self, value: Types) -> u8 {
         self.constant_pool.push(value);
