@@ -1,5 +1,6 @@
 use std::sync::{Mutex, OnceLock};
 use crate::chunk::{Byte, Chunk, OpCode};
+use crate::debug;
 use crate::value::{print_value, Types};
 
 pub struct VM<'a> { // “The Chunk reference stored in this VM must live at least as long as 'a.”
@@ -25,6 +26,8 @@ impl<'a> VM<'a> {
     }
     fn run(&mut self) -> RunResult {
         loop{
+            let chunk: &Chunk = self.chunk.as_ref().unwrap();
+            debug::disassemble_instruction(chunk, self.instruction_pointer);
             let byte: Option<Byte> = self.read_byte();
             if let Some(instruction) = byte {
                 let op_code: OpCode = instruction.byte.into();
@@ -34,13 +37,13 @@ impl<'a> VM<'a> {
                     }
                     OpCode::OpConstant => {
                         let constant: &Types = self.read_constant();
-                        print_value(constant);
+                        // print_value(constant);
                         println!("");
                         continue;
                     }
                     OpCode::OpConstantLong => {
                         let constant: &Types = self.read_constant_long();
-                        print_value(constant);
+                        // print_value(constant);
                         println!("");
                         continue;
                     }

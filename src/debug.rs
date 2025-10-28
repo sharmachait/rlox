@@ -9,7 +9,7 @@ pub fn disassemble<T: ToString>(chunk: &mut Chunk, name: T){
         offset = disassemble_instruction(chunk, offset);
     }
 }
-fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
+pub fn disassemble_instruction(chunk: & Chunk, offset: usize) -> usize {
     print!("{offset:04} ");
     // not necessary but useful when we get to loops and if statements
     // a lot of jumping around in the code
@@ -36,7 +36,7 @@ fn disassemble_instruction(chunk: &mut Chunk, offset: usize) -> usize {
 
     }
 }
-fn constant_instruction_long(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
+fn constant_instruction_long(name: &str, chunk: & Chunk, offset: usize) -> usize {
     let byte1 = chunk.code[offset + 1].byte as usize;
     let byte2 = chunk.code[offset + 2].byte as usize;
     let byte3 = chunk.code[offset + 3].byte as usize;
@@ -49,7 +49,7 @@ fn constant_instruction_long(name: &str, chunk: &mut Chunk, offset: usize) -> us
 
     offset + 4  // OpCode + 3 operand bytes
 }
-fn constant_instruction(name: &str, chunk: &mut Chunk, offset: usize) -> usize {
+fn constant_instruction(name: &str, chunk: & Chunk, offset: usize) -> usize {
     let constant_index = chunk.code[offset+ 1 ].byte;
     print!("{:<16} {:>4} '", name, constant_index);
     let val = &chunk.constant_pool[constant_index as usize];
