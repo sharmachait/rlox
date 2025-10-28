@@ -1,5 +1,7 @@
 use crate::value::Types;
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
 pub enum OpCode {
     OpReturn,
     // use when the value needs to be produced
@@ -24,6 +26,7 @@ impl From<u8> for OpCode {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Byte {
     pub byte: u8,
     pub line: usize
@@ -70,7 +73,7 @@ impl Chunk {
         if constant_pool_index >=256 {
             self.write((constant_pool_index & 0xFF) as u8, line);
             self.write(((constant_pool_index >> 8) & 0xFF) as u8, line);
-            self.write(((constant_pool_index >> 16) & 0xFF) as u8, line); 
+            self.write(((constant_pool_index >> 16) & 0xFF) as u8, line);
             // 3 bytes as the book tells us to use 24 bits
         }else{
             self.write(constant_pool_index as u8, line);
