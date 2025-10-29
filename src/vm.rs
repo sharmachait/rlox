@@ -36,37 +36,25 @@ impl<'a> VM<'a> {
                 print_value(slot);
                 print!(" ]");
             }
-            println!("");
+            println!();
 
             let chunk: &Chunk = self.chunk.as_ref().unwrap();
             debug::disassemble_instruction(chunk, self.instruction_pointer);
             let byte: Option<Byte> = self.read_byte();
+
             if let Some(instruction) = byte {
                 let op_code: OpCode = instruction.byte.into();
                 match op_code {
                     OpCode::OpReturn => {
-                        if let Some(value) = self.stack.pop() {
-                            print_value(&value);
-                            println!();
-                        } else {
-                            println!("Stack is empty!");
-                        }
+                        self.handle_return();
                         return RunResult::Ok;
                     }
                     OpCode::OpConstant => {
-                        let constant = {
-                            let c = self.read_constant();
-                            c.clone()
-                        };
-                        self.stack.push(constant);
+                        self.handle_constant();
                         continue;
                     }
                     OpCode::OpConstantLong => {
-                        let constant = {
-                            let c = self.read_constant_long();
-                            c.clone()
-                        };
-                        self.stack.push(constant);
+                        self.handle_constant_long();
                         continue;
                     }
                     OpCode::Unimplemented => {
@@ -76,6 +64,32 @@ impl<'a> VM<'a> {
             }
         }
     }
+
+    fn handle_constant_long(&mut self) {
+        let constant = {
+            let c = self.read_constant_long();
+            c.clone()
+        };
+        self.stack.push(constant);
+    }
+
+    fn handle_constant(&mut self) {
+        let constant = {
+            let c = self.read_constant();
+            c.clone()
+        };
+        self.stack.push(constant);
+    }
+
+    fn handle_return(&mut self) {
+        if let Some(value) = self.stack.pop() {
+            print_value(&value);
+            println!();
+        } else {
+            println!("Stack is empty!");
+        }
+    }
+
     fn read_byte(&mut self) -> Option<Byte> {
         let chunk = self.chunk.as_ref().unwrap();
         let byte = *chunk.code.get(self.instruction_pointer)?;
