@@ -1,5 +1,5 @@
-use std::io::Read;
-use std::sync::{Mutex, OnceLock};
+// use std::io::Read;
+// use std::sync::{Mutex, OnceLock};
 use crate::chunk::{Byte, Chunk, OpCode};
 use crate::debug;
 use crate::value::{print_value, Types};
@@ -56,15 +56,29 @@ impl<'a> VM<'a> {
                     OpCode::OpConstantLong => {
                         self.handle_constant_long();
                         continue;
-                    }
+                    },
+                    OpCode::OpNegate => {
+                        self.handle_negate();
+                    },
                     OpCode::Unimplemented => {
                         return RunResult::RuntimeError(instruction);
-                    }
+                    },
+                    OpCode::OpAdd => {
+                        self.handle_binary_op(OpCode::OpAdd);
+                    },
+                    OpCode::OpSubtract => {
+                        self.handle_binary_op(OpCode::OpSubtract);
+                    },
+                    OpCode::OpMultiply => {
+                        self.handle_binary_op(OpCode::OpMultiply);
+                    },
+                    OpCode::OpDivide => {
+                        self.handle_binary_op(OpCode::OpDivide);
+                    },
                 }
             }
         }
     }
-
     fn handle_constant_long(&mut self) {
         let constant = {
             let c = self.read_constant_long();
@@ -72,7 +86,6 @@ impl<'a> VM<'a> {
         };
         self.stack.push(constant);
     }
-
     fn handle_constant(&mut self) {
         let constant = {
             let c = self.read_constant();
@@ -80,7 +93,6 @@ impl<'a> VM<'a> {
         };
         self.stack.push(constant);
     }
-
     fn handle_return(&mut self) {
         if let Some(value) = self.stack.pop() {
             print_value(&value);
@@ -89,30 +101,47 @@ impl<'a> VM<'a> {
             println!("Stack is empty!");
         }
     }
-
     fn read_byte(&mut self) -> Option<Byte> {
         let chunk = self.chunk.as_ref().unwrap();
         let byte = *chunk.code.get(self.instruction_pointer)?;
         self.instruction_pointer += 1;
         Some(byte)
     }
-
     fn read_constant(&mut self) -> &Types {
         let constant_index:usize = self.read_byte().unwrap().byte.into();
-        let constant = &(self.chunk.as_ref().unwrap().constant_pool[constant_index]);
-        constant
+        &(self.chunk.as_ref().unwrap().constant_pool[constant_index])
     }
-
     fn read_constant_long(&mut self) -> &Types {
         let byte1:usize = self.read_byte().unwrap().byte.into();
         let byte2:usize = self.read_byte().unwrap().byte.into();
         let byte3:usize = self.read_byte().unwrap().byte.into();
         let constant_index = byte1 | (byte2 << 8) | (byte3 << 16);
-        let constant = &(self.chunk.as_ref().unwrap().constant_pool[constant_index]);
-        constant
+        &(self.chunk.as_ref().unwrap().constant_pool[constant_index])
+    }
+    fn handle_negate(&mut self) {
+        if let Some(Types::Val(v)) = self.stack.pop() {
+            let new_val = Types::Val(-v);
+            self.stack.push(new_val);
+        }
+    }
+
+    fn handle_binary_op(&mut self, code: OpCode) {
+        let (b, a) = match (self.stack.pop(), self.stack.pop()) {
+            (Some(Types::Val(b)), Some(Types::Val(a))) => (b, a),
+            _ => return, // Graceful exit if stack underflow or wrong types
+        };
+
+        let result = match code {
+            OpCode::OpAdd => a + b,
+            OpCode::OpSubtract => a - b,
+            OpCode::OpMultiply => a * b,
+            OpCode::OpDivide => a / b,
+            _ => return, // Ignore unsupported opcodes
+        };
+
+        self.stack.push(Types::Val(result));
     }
 }
-
 pub enum RunResult<> {
     Ok,
     CompileError,

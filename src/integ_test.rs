@@ -1,11 +1,11 @@
 use crate::chunk::Chunk;
-use crate::chunk::OpCode::{OpConstant, OpConstantLong, OpReturn};
+use crate::chunk::OpCode::{OpConstant, OpConstantLong, OpNegate, OpReturn, OpAdd, OpDivide};
 use crate::debug::disassemble;
 use crate::value;
-use std::io::Write;
+use crate::vm::VM;
 
 #[test]
-fn large_constant_pool(){
+fn disassemble_large_constant_pool(){
     let mut chunk = Chunk::new();
 
     for _i in 0..320 {
@@ -47,5 +47,43 @@ fn large_constant_pool(){
     // Optional: print for visual verification (won't be captured but useful when running test)
     disassemble(&mut chunk, "test chunk");
 
+    chunk.free();
+}
+
+#[test]
+fn vm_negate_return(){
+    let mut vm: VM = VM::new();
+
+    let mut chunk = Chunk::new();
+    chunk.write_constant(value::Types::Val(1.2), 123);
+    chunk.write(OpNegate as u8, 123);
+
+    chunk.write(OpReturn as u8, 123);
+
+    vm.interpret(&mut chunk);
+    vm.free();
+    chunk.free();
+}
+
+#[test]
+fn vm_binary_expression_return(){
+    let mut vm: VM = VM::new();
+    let mut chunk = Chunk::new();
+    
+    chunk.write_constant(value::Types::Val(1.2), 123);
+    chunk.write_constant(value::Types::Val(3.4), 123);
+    
+    chunk.write(OpAdd as u8, 123);
+
+    chunk.write_constant(value::Types::Val(5.6), 123);
+
+    chunk.write(OpDivide as u8, 123);
+    
+    chunk.write(OpNegate as u8, 123);
+    
+    chunk.write(OpReturn as u8, 123);
+
+    vm.interpret(&mut chunk);
+    vm.free();
     chunk.free();
 }

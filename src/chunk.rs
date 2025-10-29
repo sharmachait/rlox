@@ -8,6 +8,11 @@ pub enum OpCode {
     // has a single bytecode operand to determine which constant to load
     OpConstant,
     OpConstantLong,
+    OpNegate,
+    OpAdd,
+    OpSubtract,
+    OpMultiply,
+    OpDivide,
     Unimplemented
 }
 
@@ -21,6 +26,11 @@ impl From<u8> for OpCode {
             0 => OpCode::OpReturn,
             1 => OpCode::OpConstant,
             2 => OpCode::OpConstantLong,
+            3 => OpCode::OpNegate,
+            4 => OpCode::OpAdd,
+            5 => OpCode::OpSubtract,
+            6 => OpCode::OpMultiply,
+            7 => OpCode::OpDivide,
             _ => OpCode::Unimplemented
         }
     }
@@ -62,13 +72,12 @@ impl Chunk {
     }
     pub fn write_constant(&mut self, val: Types, line: usize) {
         let constant_pool_index = self.add_constant(val);
-        let opCode: OpCode;
+
         if constant_pool_index < 256 {
-            opCode = OpCode::OpConstant
+            self.write(OpCode::OpConstant as u8, line);
         }else {
-            opCode = OpCode::OpConstantLong
+            self.write(OpCode::OpConstantLong as u8, line);
         }
-        self.write(opCode as u8, line);
 
         if constant_pool_index >=256 {
             self.write((constant_pool_index & 0xFF) as u8, line);
@@ -81,7 +90,7 @@ impl Chunk {
     }
     fn add_constant(&mut self, value: Types) -> usize {
         self.constant_pool.push(value);
-        (self.constant_pool.len() - 1)
+        self.constant_pool.len() - 1
     }
     pub fn free(&mut self) {
         self.code = Vec::new();
