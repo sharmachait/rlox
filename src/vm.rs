@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::sync::{Mutex, OnceLock};
 use crate::chunk::{Byte, Chunk, OpCode};
 use crate::debug;
@@ -5,19 +6,22 @@ use crate::value::{print_value, Types};
 
 pub struct VM<'a> { // “The Chunk reference stored in this VM must live at least as long as 'a.”
     chunk: Option<&'a mut Chunk>,
-    instruction_pointer: usize
+    instruction_pointer: usize,
+    stack: Vec<Types>
 }
 
 impl<'a> VM<'a> {
     pub fn new() -> Self{
         Self {
             chunk: Option::None,
-            instruction_pointer: 0
+            instruction_pointer: 0,
+            stack: Vec::new()
         }
     }
     pub fn free(&mut self) {
         self.chunk = None;
-
+        self.instruction_pointer = 0;
+        self.stack.clear();
     }
     pub fn interpret(&mut self, chunk: &'a mut Chunk) -> RunResult {
         self.chunk = Some(chunk);
@@ -26,6 +30,14 @@ impl<'a> VM<'a> {
     }
     fn run(&mut self) -> RunResult {
         loop{
+            print!("          ");
+            for slot in &self.stack {
+                print!("[ ");
+                print_value(slot);
+                print!(" ]");
+            }
+            println!("");
+
             let chunk: &Chunk = self.chunk.as_ref().unwrap();
             debug::disassemble_instruction(chunk, self.instruction_pointer);
             let byte: Option<Byte> = self.read_byte();
@@ -33,22 +45,32 @@ impl<'a> VM<'a> {
                 let op_code: OpCode = instruction.byte.into();
                 match op_code {
                     OpCode::OpReturn => {
+                        if let Some(value) = self.stack.pop() {
+                            print_value(&value);
+                            println!();
+                        } else {
+                            println!("Stack is empty!");
+                        }
                         return RunResult::Ok;
                     }
                     OpCode::OpConstant => {
-                        let constant: &Types = self.read_constant();
-                        // print_value(constant);
-                        println!("");
+                        let constant = {
+                            let c = self.read_constant();
+                            c.clone()
+                        };
+                        self.stack.push(constant);
                         continue;
                     }
                     OpCode::OpConstantLong => {
-                        let constant: &Types = self.read_constant_long();
-                        // print_value(constant);
-                        println!("");
+                        let constant = {
+                            let c = self.read_constant_long();
+                            c.clone()
+                        };
+                        self.stack.push(constant);
                         continue;
                     }
                     OpCode::Unimplemented => {
-                        return RunResult::RuntimeError(instruction)
+                        return RunResult::RuntimeError(instruction);
                     }
                 }
             }
