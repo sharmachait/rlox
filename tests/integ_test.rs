@@ -1,8 +1,8 @@
-use crate::chunk::Chunk;
-use crate::chunk::OpCode::{OpConstant, OpConstantLong, OpNegate, OpReturn, OpAdd, OpDivide};
-use crate::debug::disassemble;
-use crate::value;
-use crate::vm::VM;
+use rlox::transpiler::chunk::Chunk;
+use rlox::transpiler::chunk::OpCode::{OpConstant, OpConstantLong, OpNegate, OpReturn, OpAdd, OpDivide};
+use rlox::transpiler::debug::disassemble;
+use rlox::transpiler::value;
+use rlox::virtual_machine::vm::VM;
 
 #[test]
 fn disassemble_large_constant_pool(){
@@ -69,18 +69,18 @@ fn vm_negate_return(){
 fn vm_binary_expression_return(){
     let mut vm: VM = VM::new();
     let mut chunk = Chunk::new();
-    
+
     chunk.write_constant(value::Types::Val(1.2), 123);
     chunk.write_constant(value::Types::Val(3.4), 123);
-    
+
     chunk.write(OpAdd as u8, 123);
 
     chunk.write_constant(value::Types::Val(5.6), 123);
 
     chunk.write(OpDivide as u8, 123);
-    
+
     chunk.write(OpNegate as u8, 123);
-    
+
     chunk.write(OpReturn as u8, 123);
 
     vm.interpret(&mut chunk);

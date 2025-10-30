@@ -1,5 +1,5 @@
-use crate::chunk::{Chunk, OpCode};
-use crate::value::{print_value};
+use crate::transpiler::chunk::{Chunk, OpCode};
+use crate::transpiler::value::{print_value};
 
 pub fn disassemble<T: ToString>(chunk: &mut Chunk, name: T){
     println!("== {} ==", name.to_string());

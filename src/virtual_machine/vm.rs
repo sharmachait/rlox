@@ -1,8 +1,8 @@
 // use std::io::Read;
 // use std::sync::{Mutex, OnceLock};
-use crate::chunk::{Byte, Chunk, OpCode};
-use crate::debug;
-use crate::value::{print_value, Types};
+use crate::transpiler::chunk::{Byte, Chunk, OpCode};
+use crate::transpiler::debug;
+use crate::transpiler::value::{print_value, Types};
 
 pub struct VM<'a> { // “The Chunk reference stored in this VM must live at least as long as 'a.”
     chunk: Option<&'a mut Chunk>,

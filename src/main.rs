@@ -1,10 +1,13 @@
-use rlox::{
-    chunk::OpCode::{OpReturn},
+use rlox::transpiler::{
+    chunk::OpCode::{OpReturn,OpNegate, OpAdd, OpDivide},
     value,
     chunk::{Chunk},
-    vm::VM,
+    
 };
-use rlox::chunk::OpCode::{OpNegate, OpAdd, OpDivide};
+use rlox::virtual_machine::{
+    vm::VM
+};
+
 
 fn main() {
 

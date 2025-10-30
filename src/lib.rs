@@ -1,6 +1,6 @@
-pub mod chunk;
-pub mod debug;
-pub mod value;
-pub mod vm;
-#[cfg(test)]
-mod integ_test;
+pub mod transpiler;
+pub mod virtual_machine;
+pub mod lexer;
+
+// #[cfg(test)]
+// mod integ_test;
