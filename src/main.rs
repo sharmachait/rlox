@@ -1,33 +1,75 @@
-use rlox::transpiler::{
-    chunk::OpCode::{OpReturn,OpNegate, OpAdd, OpDivide},
-    value,
-    chunk::{Chunk},
-    
-};
 use rlox::virtual_machine::{
     vm::VM
 };
 
+use std::{env, io::{Write}, io, fs};
+use std::process;
+use rlox::virtual_machine::vm::RunResult;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() == 1 {
+        repl();
+    } else if args.len() == 2 {
+        run_file(&args[1]);
+    } else {
+        eprintln!("Usage: clox [path]");
+        process::exit(64);
+    }
+}
 
+fn repl() {
     let mut vm: VM = VM::new();
-    let mut chunk = Chunk::new();
+    let mut line = String::new();
 
-    chunk.write_constant(value::Types::Val(1.2), 123);
-    chunk.write_constant(value::Types::Val(3.4), 123);
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap(); // flush prompt
 
-    chunk.write(OpAdd as u8, 123);
+        line.clear();
 
-    chunk.write_constant(value::Types::Val(5.6), 123);
+        if io::stdin().read_line(&mut line).is_err() {
+            println!();
+            break;
+        }
 
-    chunk.write(OpDivide as u8, 123);
+        // EOF (Ctrl+D / Ctrl+Z) returns 0 bytes
+        if line.is_empty() {
+            println!();
+            break;
+        }
 
-    chunk.write(OpNegate as u8, 123);
+        vm.run_source(&mut line);
+    }
 
-    chunk.write(OpReturn as u8, 123);
-
-    vm.interpret(&mut chunk);
     vm.free();
-    chunk.free();
+}
+
+fn run_file(path: &str) {
+    let mut vm: VM = VM::new();
+
+    let file = fs::read_to_string(path);
+    let mut content = match file {
+        Ok(c) => {
+            c
+        }
+        Err(e) => {
+            eprintln!("Could not read file \"{}\": {}", path, e);
+            process::exit(74);
+        }
+    };
+
+    let run_result: RunResult = vm.run_source(&mut content);
+
+    match run_result {
+        RunResult::Ok => {}
+        RunResult::CompileError => {
+            process::exit(65);
+        }
+        RunResult::RuntimeError(_) => {
+            process::exit(70);
+        }
+    }
+
+    vm.free();
 }

@@ -3,6 +3,7 @@
 use crate::transpiler::chunk::{Byte, Chunk, OpCode};
 use crate::transpiler::debug;
 use crate::transpiler::value::{print_value, Types};
+use crate::lexer::lexer::lex;
 
 pub struct VM<'a> { // “The Chunk reference stored in this VM must live at least as long as 'a.”
     chunk: Option<&'a mut Chunk>,
@@ -17,6 +18,10 @@ impl<'a> VM<'a> {
             instruction_pointer: 0,
             stack: Vec::new()
         }
+    }
+    pub fn run_source(&self, source: &mut String) -> RunResult {
+        lex(source);
+        RunResult::Ok
     }
     pub fn free(&mut self) {
         self.chunk = None;
