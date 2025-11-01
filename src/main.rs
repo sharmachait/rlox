@@ -38,7 +38,7 @@ fn repl() {
             println!();
             break;
         }
-
+        line = line.trim().to_string();
         vm.run_source(&mut line);
     }
 
