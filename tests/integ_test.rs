@@ -60,9 +60,9 @@ fn vm_negate_return(){
 
     chunk.write(OpReturn as u8, 123);
 
-    vm.interpret(&mut chunk);
+    vm.run_chunk(chunk);
     vm.free();
-    chunk.free();
+    
 }
 
 #[test]
@@ -83,7 +83,6 @@ fn vm_binary_expression_return(){
 
     chunk.write(OpReturn as u8, 123);
 
-    vm.interpret(&mut chunk);
+    vm.run_chunk(chunk);
     vm.free();
-    chunk.free();
 }

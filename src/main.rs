@@ -19,10 +19,9 @@ fn main() {
 }
 
 fn repl() {
-    let mut vm: VM = VM::new();
-    let mut line = String::new();
-
     loop {
+        let mut vm: VM = VM::new();
+        let mut line = String::new();
         print!("> ");
         io::stdout().flush().unwrap(); // flush prompt
 
@@ -42,7 +41,7 @@ fn repl() {
         vm.run_source(&mut line);
     }
 
-    vm.free();
+
 }
 
 fn run_file(path: &str) {
@@ -71,5 +70,5 @@ fn run_file(path: &str) {
         }
     }
 
-    vm.free();
+
 }

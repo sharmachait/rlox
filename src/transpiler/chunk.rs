@@ -55,6 +55,8 @@ pub struct Chunk {
     pub code: Vec<Byte>,
     pub constant_pool: Vec<Types>
 }
+
+
 // operands for a bytecode instruction are not the operands for the operator
 // but flags that modify how the instruction behaves
 // operands follow the op code immediately afterwards in the byte stream
@@ -96,4 +98,5 @@ impl Chunk {
         self.code = Vec::new();
         self.constant_pool = Vec::new();
     }
+
 }

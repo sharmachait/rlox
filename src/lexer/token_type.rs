@@ -40,7 +40,8 @@ pub enum TokenType {
     Var,
     While,
     Error, // used to signal to the compiler that an error has occurred and  the compiler can clean up the memory
-    Eof
+    Eof,
+    InitNull
 }
 
 impl Display for TokenType {

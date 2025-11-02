@@ -3,15 +3,17 @@
 use crate::transpiler::chunk::{Byte, Chunk, OpCode};
 use crate::transpiler::debug;
 use crate::transpiler::value::{print_value, Types};
-use crate::lexer::lexer::lex;
+use crate::lexer::lexer::{Scanner};
+use crate::lexer::token_type::TokenType;
+use crate::transpiler::Parser::compile;
 
-pub struct VM<'a> { // “The Chunk reference stored in this VM must live at least as long as 'a.”
-    chunk: Option<&'a mut Chunk>,
+pub struct VM { // “The Chunk reference stored in this VM must live at least as long as 'a.”
+    chunk: Option<Chunk>,
     instruction_pointer: usize,
     stack: Vec<Types>
 }
 
-impl<'a> VM<'a> {
+impl VM {
     pub fn new() -> Self{
         Self {
             chunk: Option::None,
@@ -19,16 +21,25 @@ impl<'a> VM<'a> {
             stack: Vec::new()
         }
     }
-    pub fn run_source(&self, source: &mut String) -> RunResult {
-        lex(source);
-        RunResult::Ok
+    pub fn run_source(mut self, source: &mut String) -> RunResult {
+        let mut chunk = Chunk::new();
+        if compile(source, &mut chunk) {
+            chunk.free();
+            return RunResult::CompileError
+        }
+        self.chunk = Some(chunk);
+        self.instruction_pointer = 0;
+        let run_result = self.run();
+
+        run_result
     }
-    pub fn free(&mut self) {
+    pub fn free(mut self) {
+        self.chunk.unwrap().free();
         self.chunk = None;
         self.instruction_pointer = 0;
         self.stack.clear();
     }
-    pub fn interpret(&mut self, chunk: &'a mut Chunk) -> RunResult {
+    pub fn run_chunk(&mut self, chunk: Chunk) -> RunResult {
         self.chunk = Some(chunk);
         self.instruction_pointer = 0;
         self.run()
@@ -146,12 +157,16 @@ impl<'a> VM<'a> {
 
         self.stack.push(Types::Val(result));
     }
+
+
 }
 pub enum RunResult<> {
     Ok,
     CompileError,
     RuntimeError(Byte)
 }
+
+
 
 // pub static VM_INSTANCE: OnceLock<Mutex<VM>> = OnceLock::new();
 //
