@@ -23,7 +23,7 @@ impl VM {
     }
     pub fn run_source(mut self, source: &mut String) -> RunResult {
         let mut chunk = Chunk::new();
-        if compile(source, &mut chunk) {
+        if !compile(source, &mut chunk) {
             chunk.free();
             return RunResult::CompileError
         }
