@@ -2,15 +2,15 @@
 // use std::sync::{Mutex, OnceLock};
 use crate::transpiler::chunk::{Byte, Chunk, OpCode};
 use crate::transpiler::debug;
-use crate::transpiler::value::{print_value, Types};
+use crate::transpiler::value::{print_value, Value};
 use crate::lexer::lexer::{Scanner};
 use crate::lexer::token_type::TokenType;
-use crate::transpiler::Parser::compile;
+use crate::transpiler::parser::compile;
 
 pub struct VM { // “The Chunk reference stored in this VM must live at least as long as 'a.”
     chunk: Option<Chunk>,
     instruction_pointer: usize,
-    stack: Vec<Types>
+    stack: Vec<Value>
 }
 
 impl VM {
@@ -74,23 +74,42 @@ impl VM {
                         continue;
                     },
                     OpCode::OpNegate => {
-                        self.handle_negate();
+                        if ! self.handle_negate(instruction){
+                            return RunResult::RuntimeError(instruction);
+                        }
                     },
                     OpCode::Unimplemented => {
                         return RunResult::RuntimeError(instruction);
                     },
                     OpCode::OpAdd => {
-                        self.handle_binary_op(OpCode::OpAdd);
+                        if !self.handle_binary_op(OpCode::OpAdd, instruction){
+                            return RunResult::RuntimeError(instruction);
+                        }
                     },
                     OpCode::OpSubtract => {
-                        self.handle_binary_op(OpCode::OpSubtract);
+                        if !self.handle_binary_op(OpCode::OpSubtract, instruction){
+                            return RunResult::RuntimeError(instruction);
+                        }
                     },
                     OpCode::OpMultiply => {
-                        self.handle_binary_op(OpCode::OpMultiply);
+                        if !self.handle_binary_op(OpCode::OpMultiply, instruction){
+                            return RunResult::RuntimeError(instruction);
+                        }
                     },
                     OpCode::OpDivide => {
-                        self.handle_binary_op(OpCode::OpDivide);
+                        if !self.handle_binary_op(OpCode::OpDivide, instruction){
+                            return RunResult::RuntimeError(instruction);
+                        }
                     },
+                    OpCode::OpNil => {
+                        self.stack.push(Value::Nil)
+                    }
+                    OpCode::OpTrue => {
+                        self.stack.push(Value::Bool(true))
+                    }
+                    OpCode::OpFalse => {
+                        self.stack.push(Value::Bool(false))
+                    }
                 }
             }
         }
@@ -123,28 +142,44 @@ impl VM {
         self.instruction_pointer += 1;
         Some(byte)
     }
-    fn read_constant(&mut self) -> &Types {
+    fn read_constant(&mut self) -> &Value {
         let constant_index:usize = self.read_byte().unwrap().byte.into();
         &(self.chunk.as_ref().unwrap().constant_pool[constant_index])
     }
-    fn read_constant_long(&mut self) -> &Types {
+    fn read_constant_long(&mut self) -> &Value {
         let byte1:usize = self.read_byte().unwrap().byte.into();
         let byte2:usize = self.read_byte().unwrap().byte.into();
         let byte3:usize = self.read_byte().unwrap().byte.into();
         let constant_index = byte1 | (byte2 << 8) | (byte3 << 16);
         &(self.chunk.as_ref().unwrap().constant_pool[constant_index])
     }
-    fn handle_negate(&mut self) {
-        if let Some(Types::Val(v)) = self.stack.pop() {
-            let new_val = Types::Val(-v);
+    fn handle_negate(&mut self, instruction: Byte) -> bool {
+        let peek = self.peek_stack_distance(0);
+        if !peek.is_num() {
+            self.runtime_error("Operant must be a number", instruction);
+            return false;
+        }
+        if let Some(Value::Num(v)) = self.stack.pop() {
+            let new_val = Value::Num(-v);
             self.stack.push(new_val);
         }
+        true
     }
 
-    fn handle_binary_op(&mut self, code: OpCode) {
+    fn peek_stack_distance(&self, distance: usize) -> &Value{
+        &(self.stack)[self.stack.len() -1 -distance]
+    }
+
+    fn handle_binary_op(&mut self, code: OpCode, instruction: Byte) -> bool {
         let (b, a) = match (self.stack.pop(), self.stack.pop()) {
-            (Some(Types::Val(b)), Some(Types::Val(a))) => (b, a),
-            _ => return, // Graceful exit if stack underflow or wrong types
+            (Some(Value::Num(b)), Some(Value::Num(a))) => (b, a),
+            (Some(Value::Str(b)), Some(Value::Str(a))) => {
+                return self.concat(b,a);
+            },
+            _ => {
+                self.runtime_error("Operands must be numbers.", instruction);
+                return false;
+            },
         };
 
         let result = match code {
@@ -152,13 +187,23 @@ impl VM {
             OpCode::OpSubtract => a - b,
             OpCode::OpMultiply => a * b,
             OpCode::OpDivide => a / b,
-            _ => return, // Ignore unsupported opcodes
+            _ => return false, // Ignore unsupported opcodes
         };
 
-        self.stack.push(Types::Val(result));
+        self.stack.push(Value::Num(result));
+        true
     }
 
+    fn runtime_error(&mut self, message: &str, instruction: Byte) {
+        eprintln!("{}", message);
+        let line = instruction.line;
+        eprintln!("{} in script", line);
+        self.stack.clear();
+    }
 
+    fn concat(&self, b: String, a: String) -> bool {
+        todo!()
+    }
 }
 pub enum RunResult<> {
     Ok,

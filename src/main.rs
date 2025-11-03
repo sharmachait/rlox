@@ -40,8 +40,6 @@ fn repl() {
         line = line.trim().to_string();
         vm.run_source(&mut line);
     }
-
-
 }
 
 fn run_file(path: &str) {
@@ -69,6 +67,4 @@ fn run_file(path: &str) {
             process::exit(70);
         }
     }
-
-
 }

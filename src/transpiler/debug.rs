@@ -36,19 +36,27 @@ pub fn disassemble_instruction(chunk: & Chunk, offset: usize) -> usize {
             println!("Unknown opcode {}", instruction as u8);
             offset + 1
         },
-
         OpCode::OpAdd => {
             simple_instruction("OP_ADD", offset)
-        }
+        },
         OpCode::OpSubtract => {
             simple_instruction("OP_SUBTRACT", offset)
-        }
+        },
         OpCode::OpMultiply => {
             simple_instruction("OP_MULTIPLY", offset)
-        }
+        },
         OpCode::OpDivide => {
             simple_instruction("OP_DIVIDE", offset)
-        }
+        },
+        OpCode::OpNil => {
+            simple_instruction("OpNil", offset)
+        },
+        OpCode::OpTrue => {
+            simple_instruction("OpTrue", offset)
+        },
+        OpCode::OpFalse => {
+            simple_instruction("OpFalse", offset)
+        },
     }
 }
 fn constant_instruction_long(name: &str, chunk: & Chunk, offset: usize) -> usize {

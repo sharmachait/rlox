@@ -3,10 +3,10 @@ use crate::lexer::token::Token;
 use crate::lexer::token_type::TokenType;
 use crate::lexer::token_type::TokenType::Eof;
 use crate::transpiler::chunk::{Chunk, OpCode};
-use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpMultiply, OpNegate, OpReturn, OpSubtract};
+use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpFalse, OpMultiply, OpNegate, OpNil, OpReturn, OpSubtract, OpTrue};
 use crate::transpiler::debug::disassemble;
-use crate::transpiler::Parser::Precedence::{Assignment, Unary};
-use crate::transpiler::value::Types;
+use crate::transpiler::parser::Precedence::{Assignment, Unary};
+use crate::transpiler::value::Value;
 
 struct Parser<'a> {
     current: Token,
@@ -87,7 +87,7 @@ impl Parser<'_> {
 
     }
     fn emit_constant(&mut self, constant: f64) {
-        self.compiling_chunk.write_constant(Types::Val(constant), self.prev.line);
+        self.compiling_chunk.write_constant(Value::Num(constant), self.prev.line);
     }
 
     fn emit_return(&mut self) {
@@ -134,11 +134,25 @@ impl Parser<'_> {
         let len = self.prev.length;
         let slice = &self.scanner.source[st..st+len];
         let num: f64 = slice.parse().unwrap();
-        self.emit_constant(num);
+        self.emit_constant(num.into());
     }
     pub fn grouping(&mut self) {
         self.expression();
         self.consume(TokenType::RightParen, "Expect ')' after expression.");
+    }
+    pub fn literal(&mut self) {
+        match self.prev.token_type {
+            TokenType::Nil => {
+                self.emit_byte(OpNil as u8);
+            }
+            TokenType::True => {
+                self.emit_byte(OpTrue as u8);
+            }
+            TokenType::False => {
+                self.emit_byte(OpFalse as u8);
+            }
+            _ => {return;}
+        }
     }
     pub fn unary(&mut self) {
         let operator_type = self.prev.token_type;
@@ -228,6 +242,10 @@ fn parse_number(parser: &mut Parser) {
     parser.number();
 }
 
+fn parse_literal(parser: &mut Parser) {
+    parser.literal();
+}
+
 fn parse_unary(parser: &mut Parser) {
     parser.unary();
 }
@@ -268,17 +286,17 @@ impl ParseRule {
             TokenType::And => ParseRule::new(None, None, Precedence::None),
             TokenType::Class => ParseRule::new(None, None, Precedence::None),
             TokenType::Else => ParseRule::new(None, None, Precedence::None),
-            TokenType::False => ParseRule::new(None, None, Precedence::None),
+            TokenType::False => ParseRule::new(Some(parse_literal), None, Precedence::None),
             TokenType::For => ParseRule::new(None, None, Precedence::None),
             TokenType::Fun => ParseRule::new(None, None, Precedence::None),
             TokenType::If => ParseRule::new(None, None, Precedence::None),
-            TokenType::Nil => ParseRule::new(None, None, Precedence::None),
+            TokenType::Nil => ParseRule::new(Some(parse_literal), None, Precedence::None),
             TokenType::Or => ParseRule::new(None, None, Precedence::None),
             TokenType::Print => ParseRule::new(None, None, Precedence::None),
             TokenType::Return => ParseRule::new(None, None, Precedence::None),
             TokenType::Super => ParseRule::new(None, None, Precedence::None),
             TokenType::This => ParseRule::new(None, None, Precedence::None),
-            TokenType::True => ParseRule::new(None, None, Precedence::None),
+            TokenType::True => ParseRule::new(Some(parse_literal), None, Precedence::None),
             TokenType::Var => ParseRule::new(None, None, Precedence::None),
             TokenType::While => ParseRule::new(None, None, Precedence::None),
             TokenType::Error => ParseRule::new(None, None, Precedence::None),

@@ -1,4 +1,4 @@
-use crate::transpiler::value::Types;
+use crate::transpiler::value::Value;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
@@ -8,6 +8,9 @@ pub enum OpCode {
     // has a single bytecode operand to determine which constant to load
     OpConstant,
     OpConstantLong,
+    OpNil,
+    OpTrue,
+    OpFalse,
     OpNegate,
     OpAdd,
     OpSubtract,
@@ -26,11 +29,14 @@ impl From<u8> for OpCode {
             0 => OpCode::OpReturn,
             1 => OpCode::OpConstant,
             2 => OpCode::OpConstantLong,
-            3 => OpCode::OpNegate,
-            4 => OpCode::OpAdd,
-            5 => OpCode::OpSubtract,
-            6 => OpCode::OpMultiply,
-            7 => OpCode::OpDivide,
+            3 => OpCode::OpNil,
+            4 => OpCode::OpTrue,
+            5 => OpCode::OpFalse,
+            6 => OpCode::OpNegate,
+            7 => OpCode::OpAdd,
+            8 => OpCode::OpSubtract,
+            9 => OpCode::OpMultiply,
+            10 => OpCode::OpDivide,
             _ => OpCode::Unimplemented
         }
     }
@@ -53,7 +59,7 @@ impl Byte{
 
 pub struct Chunk {
     pub code: Vec<Byte>,
-    pub constant_pool: Vec<Types>
+    pub constant_pool: Vec<Value>
 }
 
 
@@ -72,7 +78,7 @@ impl Chunk {
     pub fn write(&mut self, byte: u8, line: usize) {
         self.code.push(Byte::new(byte, line));
     }
-    pub fn write_constant(&mut self, val: Types, line: usize) {
+    pub fn write_constant(&mut self, val: Value, line: usize) {
         let constant_pool_index = self.add_constant(val);
 
         if constant_pool_index < 256 {
@@ -90,7 +96,7 @@ impl Chunk {
             self.write(constant_pool_index as u8, line);
         }
     }
-    fn add_constant(&mut self, value: Types) -> usize {
+    fn add_constant(&mut self, value: Value) -> usize {
         self.constant_pool.push(value);
         self.constant_pool.len() - 1
     }
@@ -98,5 +104,4 @@ impl Chunk {
         self.code = Vec::new();
         self.constant_pool = Vec::new();
     }
-
 }
