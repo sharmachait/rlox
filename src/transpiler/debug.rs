@@ -57,6 +57,9 @@ pub fn disassemble_instruction(chunk: & Chunk, offset: usize) -> usize {
         OpCode::OpFalse => {
             simple_instruction("OpFalse", offset)
         },
+        OpCode::OpNot => {
+            simple_instruction("OpNot", offset)
+        }
     }
 }
 fn constant_instruction_long(name: &str, chunk: & Chunk, offset: usize) -> usize {

@@ -110,6 +110,10 @@ impl VM {
                     OpCode::OpFalse => {
                         self.stack.push(Value::Bool(false))
                     }
+                    OpCode::OpNot => {
+                        let v = self.stack.pop();
+                        self.stack.push(Value::Bool(self.is_falsey(v)))
+                    }
                 }
             }
         }
@@ -203,6 +207,11 @@ impl VM {
 
     fn concat(&self, b: String, a: String) -> bool {
         todo!()
+    }
+
+    fn is_falsey(&self, val: Option<Value>) -> bool {
+        let val = &(val.unwrap());
+        Value::is_nil(val) || (Value::is_bool(val) && !val.as_bool().unwrap()) 
     }
 }
 pub enum RunResult<> {

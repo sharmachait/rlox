@@ -16,6 +16,7 @@ pub enum OpCode {
     OpSubtract,
     OpMultiply,
     OpDivide,
+    OpNot,
     Unimplemented
 }
 
@@ -37,6 +38,7 @@ impl From<u8> for OpCode {
             8 => OpCode::OpSubtract,
             9 => OpCode::OpMultiply,
             10 => OpCode::OpDivide,
+            11 => OpCode::OpNot,
             _ => OpCode::Unimplemented
         }
     }

@@ -3,7 +3,7 @@ use crate::lexer::token::Token;
 use crate::lexer::token_type::TokenType;
 use crate::lexer::token_type::TokenType::Eof;
 use crate::transpiler::chunk::{Chunk, OpCode};
-use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpFalse, OpMultiply, OpNegate, OpNil, OpReturn, OpSubtract, OpTrue};
+use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpFalse, OpMultiply, OpNegate, OpNil, OpNot, OpReturn, OpSubtract, OpTrue};
 use crate::transpiler::debug::disassemble;
 use crate::transpiler::parser::Precedence::{Assignment, Unary};
 use crate::transpiler::value::Value;
@@ -162,7 +162,9 @@ impl Parser<'_> {
             TokenType::Minus => {
                 self.emit_byte(OpNegate as u8);
             }
-            TokenType::Bang => {}
+            TokenType::Bang => {
+                self.emit_byte(OpNot as u8);
+            }
             _ => {return;}
         }
     }
@@ -272,7 +274,7 @@ impl ParseRule {
             TokenType::Semicolon => ParseRule::new(None, None, Precedence::None),
             TokenType::Slash => ParseRule::new(None, Some(parse_binary), Precedence::Factor),
             TokenType::Star => ParseRule::new(None, Some(parse_binary), Precedence::Factor),
-            TokenType::Bang => ParseRule::new(None, None, Precedence::None),
+            TokenType::Bang => ParseRule::new(Some(parse_unary), None, Precedence::None),
             TokenType::BangEqual => ParseRule::new(None, None, Precedence::None),
             TokenType::Equal => ParseRule::new(None, None, Precedence::None),
             TokenType::EqualEqual => ParseRule::new(None, None, Precedence::None),
