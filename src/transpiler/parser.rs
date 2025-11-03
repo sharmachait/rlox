@@ -3,7 +3,7 @@ use crate::lexer::token::Token;
 use crate::lexer::token_type::TokenType;
 use crate::lexer::token_type::TokenType::Eof;
 use crate::transpiler::chunk::{Chunk, OpCode};
-use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpFalse, OpMultiply, OpNegate, OpNil, OpNot, OpReturn, OpSubtract, OpTrue};
+use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpEqual, OpFalse, OpGreater, OpLess, OpMultiply, OpNegate, OpNil, OpNot, OpReturn, OpSubtract, OpTrue};
 use crate::transpiler::debug::disassemble;
 use crate::transpiler::parser::Precedence::{Assignment, Unary};
 use crate::transpiler::value::Value;
@@ -184,6 +184,12 @@ impl Parser<'_> {
             TokenType::Plus => {self.emit_byte(OpAdd as u8);}
             TokenType::Slash => {self.emit_byte(OpDivide as u8);}
             TokenType::Star => {self.emit_byte(OpMultiply as u8);}
+            TokenType::BangEqual => {self.emit_bytes(OpEqual as u8, OpNot as u8);}
+            TokenType::EqualEqual => {self.emit_byte(OpEqual as u8);}
+            TokenType::Greater => {self.emit_byte(OpGreater as u8);}
+            TokenType::GreaterEqual => {self.emit_bytes(OpGreater as u8, OpEqual as u8);}
+            TokenType::Less => {self.emit_byte(OpLess as u8);}
+            TokenType::LessEqual => {self.emit_bytes(OpLess as u8, OpEqual as u8);}
             _ => {return;}
         }
     }
@@ -275,13 +281,13 @@ impl ParseRule {
             TokenType::Slash => ParseRule::new(None, Some(parse_binary), Precedence::Factor),
             TokenType::Star => ParseRule::new(None, Some(parse_binary), Precedence::Factor),
             TokenType::Bang => ParseRule::new(Some(parse_unary), None, Precedence::None),
-            TokenType::BangEqual => ParseRule::new(None, None, Precedence::None),
+            TokenType::BangEqual => ParseRule::new(None, Some(parse_binary), Precedence::Equality),
             TokenType::Equal => ParseRule::new(None, None, Precedence::None),
-            TokenType::EqualEqual => ParseRule::new(None, None, Precedence::None),
-            TokenType::Greater => ParseRule::new(None, None, Precedence::None),
-            TokenType::GreaterEqual => ParseRule::new(None, None, Precedence::None),
-            TokenType::Less => ParseRule::new(None, None, Precedence::None),
-            TokenType::LessEqual => ParseRule::new(None, None, Precedence::None),
+            TokenType::EqualEqual => ParseRule::new(None, Some(parse_binary), Precedence::Equality),
+            TokenType::Greater => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
+            TokenType::GreaterEqual => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
+            TokenType::Less => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
+            TokenType::LessEqual => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
             TokenType::Identifier => ParseRule::new(None, None, Precedence::None),
             TokenType::String => ParseRule::new(None, None, Precedence::None),
             TokenType::Number => ParseRule::new(Some(parse_number), None, Precedence::None),

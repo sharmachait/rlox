@@ -53,6 +53,16 @@ impl Value {
         }
     }
 
+    pub fn equal_by_type(a: &Value, b: &Value) -> bool {
+        match (a, b) {
+            (Value::Num(x), Value::Num(y)) => true,
+            (Value::Str(x), Value::Str(y)) =>true,
+            (Value::Bool(x), Value::Bool(y)) => true,
+            (Value::Nil, Value::Nil) => true,
+            _ => false,
+        }
+    }
+
     pub fn as_number(&self) -> Option<f64> {
         match self {
             Value::Num(n) => Some(*n),

@@ -49,16 +49,25 @@ pub fn disassemble_instruction(chunk: & Chunk, offset: usize) -> usize {
             simple_instruction("OP_DIVIDE", offset)
         },
         OpCode::OpNil => {
-            simple_instruction("OpNil", offset)
+            simple_instruction("OP_NIL", offset)
         },
         OpCode::OpTrue => {
-            simple_instruction("OpTrue", offset)
+            simple_instruction("OP_TRUE", offset)
         },
         OpCode::OpFalse => {
-            simple_instruction("OpFalse", offset)
+            simple_instruction("OP_FALSE", offset)
         },
         OpCode::OpNot => {
-            simple_instruction("OpNot", offset)
+            simple_instruction("OP_NOT", offset)
+        }
+        OpCode::OpEqual => {
+            simple_instruction("OP_EQUAL", offset)
+        }
+        OpCode::OpGreater => {
+            simple_instruction("OP_GREATER", offset)
+        }
+        OpCode::OpLess => {
+            simple_instruction("OP_LESS", offset)
         }
     }
 }

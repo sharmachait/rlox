@@ -5,6 +5,7 @@ use crate::transpiler::debug;
 use crate::transpiler::value::{print_value, Value};
 use crate::lexer::lexer::{Scanner};
 use crate::lexer::token_type::TokenType;
+use crate::transpiler::chunk::OpCode::{OpGreater, OpLess};
 use crate::transpiler::parser::compile;
 
 pub struct VM { // “The Chunk reference stored in this VM must live at least as long as 'a.”
@@ -114,6 +115,15 @@ impl VM {
                         let v = self.stack.pop();
                         self.stack.push(Value::Bool(self.is_falsey(v)))
                     }
+                    OpCode::OpEqual => {
+                        self.handle_equal()
+                    }
+                    OpCode::OpGreater => {
+                        self.handle_binary_op(OpGreater, instruction);
+                    }
+                    OpCode::OpLess => {
+                        self.handle_binary_op(OpLess, instruction);
+                    }
                 }
             }
         }
@@ -180,6 +190,12 @@ impl VM {
             (Some(Value::Str(b)), Some(Value::Str(a))) => {
                 return self.concat(b,a);
             },
+            (Some(Value::Str(b)), Some(Value::Num(a))) => {
+                return self.concat_string_num(b,a);
+            },
+            (Some(Value::Num(b)), Some(Value::Str(a))) => {
+                return self.concat_num_string(b,a);
+            },
             _ => {
                 self.runtime_error("Operands must be numbers.", instruction);
                 return false;
@@ -191,6 +207,14 @@ impl VM {
             OpCode::OpSubtract => a - b,
             OpCode::OpMultiply => a * b,
             OpCode::OpDivide => a / b,
+            OpCode::OpGreater => {
+            self.stack.push(Value::Bool(a>b));
+                return true;
+            }
+            OpCode::OpLess => {
+                self.stack.push(Value::Bool(a<b));
+                return true;
+            }
             _ => return false, // Ignore unsupported opcodes
         };
 
@@ -208,10 +232,42 @@ impl VM {
     fn concat(&self, b: String, a: String) -> bool {
         todo!()
     }
+    fn concat_num_string(&self, b: f64, a: String) -> bool {
+        todo!()
+    }
+    fn concat_string_num(&self, b: String, a: f64) -> bool {
+        todo!()
+    }
 
     fn is_falsey(&self, val: Option<Value>) -> bool {
         let val = &(val.unwrap());
-        Value::is_nil(val) || (Value::is_bool(val) && !val.as_bool().unwrap()) 
+        Value::is_nil(val) || (Value::is_bool(val) && !val.as_bool().unwrap())
+    }
+
+    fn handle_equal(&mut self) {
+        let (b, a) = (self.stack.pop(), self.stack.pop());
+        let res = self.values_equal(a.unwrap(),b.unwrap());
+        self.stack.push(Value::Bool(res));
+    }
+
+    fn values_equal(&self, a: Value, b: Value) -> bool {
+        let is_equal = Value::equal_by_type(&a,&b);
+        if  !is_equal {
+            return false;
+        }
+
+        match a {
+            Value::Num(x) => {
+                a.as_number().unwrap() == b.as_number().unwrap()
+            }
+            Value::Str(x) => {
+                todo!();
+            }
+            Value::Bool(x) => {
+                a.as_bool().unwrap() == b.as_bool().unwrap()
+            }
+            Value::Nil => {true}
+        }
     }
 }
 pub enum RunResult<> {
