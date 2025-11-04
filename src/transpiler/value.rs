@@ -1,15 +1,27 @@
 #[derive(Clone, Debug)]
 pub enum Value {
     Num(f64),
-    Str(String),
+    Obj(Obj),
     Bool(bool),
-    Nil
+    Nil,
+
+}
+#[derive(Clone, Debug)]
+pub enum Obj {
+    Str(String),
+
 }
 
 pub fn print_value(constant: &Value) {
     match constant {
         Value::Num(v) => {print!("{}", v)},
-        Value::Str(s) => {print!("{}", s)},
+        Value::Obj(obj) => {
+            match obj {
+                Obj::Str(str) => {
+                    print!("{}", str)
+                }
+            }
+        },
         Value::Bool(b) => {print!("{}", b)},
         Value::Nil => {print!("Nil")}
     }
@@ -29,7 +41,7 @@ impl From<f64> for Value {
 
 impl From<&str> for Value {
     fn from(val: &str) -> Self {
-        Value::Str(val.to_string())
+        Value::Obj(Obj::Str(val.to_string()))
     }
 }
 
@@ -56,7 +68,11 @@ impl Value {
     pub fn equal_by_type(a: &Value, b: &Value) -> bool {
         match (a, b) {
             (Value::Num(x), Value::Num(y)) => true,
-            (Value::Str(x), Value::Str(y)) =>true,
+            (Value::Obj(x), Value::Obj(y)) => {
+                match (x,y) {
+                    (Obj::Str(a),Obj::Str(b))=> true
+                }
+            },
             (Value::Bool(x), Value::Bool(y)) => true,
             (Value::Nil, Value::Nil) => true,
             _ => false,
@@ -70,9 +86,20 @@ impl Value {
         }
     }
 
+    pub fn as_obj(&self) -> Option<Obj> {
+        match self {
+            Value::Obj(n) => Some(n.clone()),
+            _ => None,
+        }
+    }
+
     pub fn as_string(&self) -> Option<String> {
         match self {
-            Value::Str(s) => Some(s.clone()),
+            Value::Obj(s) => {
+                match s {
+                    Obj::Str(ss) => Some(ss.clone())
+                }
+            },
             _ => None,
         }
     }
@@ -80,7 +107,7 @@ impl Value {
     pub fn is_bool(&self) -> bool {
         match *self {
             Value::Num(_) => {false}
-            Value::Str(_) => {false}
+            Value::Obj(_) => {false}
             Value::Bool(_) => {true}
             Value::Nil => {false}
         }
@@ -88,25 +115,38 @@ impl Value {
     pub fn is_num(&self) -> bool {
         match *self {
             Value::Num(_) => {true}
-            Value::Str(_) => {false}
+            Value::Obj(_) => {false}
             Value::Bool(_) => {false}
             Value::Nil => {false}
         }
     }
     pub fn is_str(&self) -> bool {
-        match *self {
-            Value::Num(_) => {false}
-            Value::Str(_) => {true}
-            Value::Bool(_) => {false}
-            Value::Nil => {false}
+        match self {
+            Value::Obj(Obj::Str(_)) => true,
+            _ => false,
         }
     }
     pub fn is_nil(&self) -> bool {
         match *self {
             Value::Num(_) => {false}
-            Value::Str(_) => {false}
+            Value::Obj(_) => {false}
             Value::Bool(_) => {false}
             Value::Nil => {true}
+        }
+    }
+    pub fn is_obj(&self) -> bool {
+        match *self {
+            Value::Num(_) => {false}
+            Value::Obj(_) => {true}
+            Value::Bool(_) => {false}
+            Value::Nil => {false}
+        }
+    }
+
+    pub fn is_obj_type(&self, obj_type: Obj) -> bool {
+        match self {
+            Value::Obj(obj_type) => true,
+            _ => false,
         }
     }
 }

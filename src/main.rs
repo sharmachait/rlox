@@ -4,9 +4,11 @@ use rlox::virtual_machine::{
 
 use std::{env, io::{Write}, io, fs};
 use std::process;
+use rlox::transpiler::value::{Obj, Value};
 use rlox::virtual_machine::vm::RunResult;
 
 fn main() {
+    
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
         repl();

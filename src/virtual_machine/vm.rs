@@ -2,7 +2,7 @@
 // use std::sync::{Mutex, OnceLock};
 use crate::transpiler::chunk::{Byte, Chunk, OpCode};
 use crate::transpiler::debug;
-use crate::transpiler::value::{print_value, Value};
+use crate::transpiler::value::{print_value, Obj, Value};
 use crate::lexer::lexer::{Scanner};
 use crate::lexer::token_type::TokenType;
 use crate::transpiler::chunk::OpCode::{OpGreater, OpLess};
@@ -187,13 +187,13 @@ impl VM {
     fn handle_binary_op(&mut self, code: OpCode, instruction: Byte) -> bool {
         let (b, a) = match (self.stack.pop(), self.stack.pop()) {
             (Some(Value::Num(b)), Some(Value::Num(a))) => (b, a),
-            (Some(Value::Str(b)), Some(Value::Str(a))) => {
+            (Some(Value::Obj(Obj::Str(b))), Some(Value::Obj(Obj::Str(a)))) => {
                 return self.concat(b,a);
             },
-            (Some(Value::Str(b)), Some(Value::Num(a))) => {
+            (Some(Value::Obj(Obj::Str(b))), Some(Value::Num(a))) => {
                 return self.concat_string_num(b,a);
             },
-            (Some(Value::Num(b)), Some(Value::Str(a))) => {
+            (Some(Value::Num(b)), Some(Value::Obj(Obj::Str(a)))) => {
                 return self.concat_num_string(b,a);
             },
             _ => {
@@ -229,14 +229,17 @@ impl VM {
         self.stack.clear();
     }
 
-    fn concat(&self, b: String, a: String) -> bool {
-        todo!()
+    fn concat(&mut self, b: String, a: String) -> bool {
+        self.stack.push(Value::Obj(Obj::Str(a+&b)));
+        true
     }
-    fn concat_num_string(&self, b: f64, a: String) -> bool {
-        todo!()
+    fn concat_num_string(&mut self, b: f64, a: String) -> bool {
+        self.stack.push(Value::Obj(Obj::Str(a+&b.to_string())));
+        true
     }
-    fn concat_string_num(&self, b: String, a: f64) -> bool {
-        todo!()
+    fn concat_string_num(&mut self, b: String, a: f64) -> bool {
+        self.stack.push(Value::Obj(Obj::Str(a.to_string()+&b)));
+        true
     }
 
     fn is_falsey(&self, val: Option<Value>) -> bool {
@@ -260,8 +263,8 @@ impl VM {
             Value::Num(x) => {
                 a.as_number().unwrap() == b.as_number().unwrap()
             }
-            Value::Str(x) => {
-                todo!();
+            Value::Obj(Obj::Str(ref s)) => {
+                a.as_string() == b.as_string()
             }
             Value::Bool(x) => {
                 a.as_bool().unwrap() == b.as_bool().unwrap()

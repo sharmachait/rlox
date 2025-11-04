@@ -6,7 +6,7 @@ use crate::transpiler::chunk::{Chunk, OpCode};
 use crate::transpiler::chunk::OpCode::{OpAdd, OpDivide, OpEqual, OpFalse, OpGreater, OpLess, OpMultiply, OpNegate, OpNil, OpNot, OpReturn, OpSubtract, OpTrue};
 use crate::transpiler::debug::disassemble;
 use crate::transpiler::parser::Precedence::{Assignment, Unary};
-use crate::transpiler::value::Value;
+use crate::transpiler::value::{Obj, Value};
 
 struct Parser<'a> {
     current: Token,
@@ -92,6 +92,19 @@ impl Parser<'_> {
 
     fn emit_return(&mut self) {
         self.emit_byte(OpReturn as u8);
+    }
+
+    pub fn string(&mut self) {
+        
+        let st = self.prev.start + 1; // omit "
+        let end = self.prev.start + self.prev.length-2; // omit "
+        let s = &self.scanner.source[st..=end];
+        self.emit_constant_string(s)
+    }
+
+    fn emit_constant_string(&mut self, str: &str) {
+        let str_val = Value::Obj(Obj::Str(str.to_string()));
+        self.compiling_chunk.write_constant(str_val, self.prev.line)
     }
 
     fn error_at_current(&mut self) {
@@ -262,6 +275,10 @@ fn parse_binary(parser: &mut Parser) {
     parser.binary();
 }
 
+fn parse_string(parser: &mut Parser) {
+    parser.string();
+}
+
 
 impl ParseRule {
     const fn new(prefix: Option<ParseFn>, infix: Option<ParseFn>, precedence: Precedence) -> Self {
@@ -289,7 +306,7 @@ impl ParseRule {
             TokenType::Less => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
             TokenType::LessEqual => ParseRule::new(None, Some(parse_binary), Precedence::Comparison),
             TokenType::Identifier => ParseRule::new(None, None, Precedence::None),
-            TokenType::String => ParseRule::new(None, None, Precedence::None),
+            TokenType::String => ParseRule::new(Some(parse_string), None, Precedence::None),
             TokenType::Number => ParseRule::new(Some(parse_number), None, Precedence::None),
             TokenType::And => ParseRule::new(None, None, Precedence::None),
             TokenType::Class => ParseRule::new(None, None, Precedence::None),
